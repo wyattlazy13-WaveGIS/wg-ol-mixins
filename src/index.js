@@ -429,31 +429,37 @@ export default {
       point1,
       point2
     ) {
-      let img = new Image()
-      img.src = url
-      let currentThis = this
-      img.onload = function () {
-        if (currentThis.layers[targetId][layerName] !== undefined) {
-          let source = new Static({
-            url: url,
-            imageExtent: [point1[0], point1[1], point2[0], point2[1]],
-            imageSize: [img.width, img.height],
-            projection: currentThis.maps[targetId].getView().getProjection(),
-          })
-          currentThis.layers[targetId][layerName].setSource(source)
-        } else {
-          currentThis.layers[targetId][layerName] = new ImageLayer({
-            name: layerName,
-            source: new Static({
+      return new Promise((resolve, reject) => {
+        let img = new Image();
+        img.src = url;
+        let currentThis = this;
+        img.onload = function () {
+          if (currentThis.layers[targetId][layerName] !== undefined) {
+            let source = new Static({
               url: url,
               imageExtent: [point1[0], point1[1], point2[0], point2[1]],
               imageSize: [img.width, img.height],
-              projection: currentThis.maps[targetId].getView().getProjection(),
-            }),
-          })
-          currentThis.setLayerByLayerName(targetId, layerName)
-        }
-      }
+              projection: currentThis.maps[targetId].getView().getProjection()
+            });
+            currentThis.layers[targetId][layerName].setSource(source);
+          } else {
+            currentThis.layers[targetId][layerName] = new ImageLayer({
+              name: layerName,
+              source: new Static({
+                url: url,
+                imageExtent: [point1[0], point1[1], point2[0], point2[1]],
+                imageSize: [img.width, img.height],
+                projection: currentThis.maps[targetId].getView().getProjection()
+              })
+            });
+            currentThis.setLayerByLayerName(targetId, layerName);
+          }
+          resolve(currentThis.layers[targetId][layerName]);
+        };
+        img.onerror = function () {
+          reject(`${url}圖片無法讀取`);
+        };
+      });
     },
     getAllLayer: function (targetId) {
       return this.maps[targetId].getLayers()
